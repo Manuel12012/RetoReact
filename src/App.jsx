@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import './index.css';
 
 function App() {
   const usuarios = [
@@ -27,7 +28,7 @@ function App() {
   };
 
   const handleSendMessage = () => {
-    if (selectedIds.length === 1) {
+    if (selectedIds.length >= 1) {
       const user = usuarios.find((usuario) => usuario.id === selectedIds[0]);
       setSelectedUser(user);
       setShowForm(true);
@@ -103,7 +104,12 @@ function App() {
       },
     };
 
-    const type = mensaje === "invitacion" ? "invitacion" : mensaje === "recordatorio" ? "recordatorio" : "personalizado";
+    const type =
+      mensaje === "invitacion"
+        ? "invitacion"
+        : mensaje === "recordatorio"
+        ? "recordatorio"
+        : "personalizado";
     const canalType = canal === "canal1" ? "correo" : "sms_whatsapp";
 
     return templates[type][canalType];
@@ -112,48 +118,67 @@ function App() {
   const handleFinalSubmit = () => {
     const messages = [];
     const newFormMessages = {};
-
-    canalesSeleccionados.forEach((canal) => {
-      const generatedMessage = generateMessage(canal);
-      messages.push({
-        usuario: selectedUser.nombre,
-        canal,
-        mensaje: generatedMessage,
+  
+    selectedIds.forEach((userId) => {
+      const user = usuarios.find((usuario) => usuario.id === userId);
+  
+      canalesSeleccionados.forEach((canal) => {
+        const generatedMessage = generateMessage(canal);
+        messages.push({
+          usuario: user.nombre,
+          canal,
+          mensaje: generatedMessage,
+        });
+  
+        // Guardar mensajes generados por canal
+        if (!newFormMessages[userId]) {
+          newFormMessages[userId] = {};
+        }
+        newFormMessages[userId][canal] = generatedMessage;
       });
-
-      newFormMessages[canal] = generatedMessage;
     });
-
+  
     setFinalMessages(messages);
     setFormMessages(newFormMessages);
-    console.log(JSON.stringify(messages, null, 2));
+  
+    console.log("Mensajes generados:", JSON.stringify(messages, null, 2));
     alert("Mensajes enviados correctamente.");
   };
+  
 
   return (
     <>
-      <h1>Lista de Usuarios</h1>
-      {usuarios.map((usuario) => (
-        <div key={usuario.id}>
-          <input
-            type="checkbox"
-            id={`checkbox-${usuario.id}`}
-            checked={selectedIds.includes(usuario.id)}
-            onChange={() => handleCheckboxChange(usuario.id)}
-          />
-          <label htmlFor={`checkbox-${usuario.id}`}>
-            {usuario.nombre} - {usuario.correo}
-          </label>
+      <div className="bg-white inline-block m-5 leading-7 p-5 rounded-lg">
+        <h1 className="text-4xl text-gray-950">Lista de Usuarios</h1>
+        {usuarios.map((usuario) => (
+          <div key={usuario.id} className="leading-10">
+            <input
+              type="checkbox"
+              id={`checkbox-${usuario.id}`}
+              checked={selectedIds.includes(usuario.id)}
+              onChange={() => handleCheckboxChange(usuario.id)}
+              className="w-6 h-6"
+            />
+            <label className="pl-2" htmlFor={`checkbox-${usuario.id}`}>
+              {usuario.nombre} - {usuario.correo}
+            </label>
+          </div>
+        ))}
+        <div className="flex justify-end">
+          <button
+            className="bg-blue-400 rounded-lg text-white p-2 hover:bg-blue-500"
+            onClick={handleSendMessage}
+          >
+            Enviar Mensaje
+          </button>
         </div>
-      ))}
-
-      <button onClick={handleSendMessage}>Enviar Mensaje</button>
+      </div>
 
       {showForm && (
-        <div>
-          <h2>Formulario de Mensaje</h2>
+        <div className="bg-white inline-block m-5 leading-7 p-5 rounded-lg">
+          <h2 className="text-4xl text-gray-950">Seleccion de tipo de mensaje</h2>
           <form>
-            <div>
+            <div className="outline outline-1 rounded-lg outline-gray-400 m-2 p-2">
               <input
                 type="radio"
                 name="mensaje"
@@ -161,10 +186,13 @@ function App() {
                 value="invitacion"
                 checked={mensaje === "invitacion"}
                 onChange={handleRadioChange}
+                className="w-6 h-6"
               />
-              <label htmlFor="invitacion">Invitación</label>
+              <label className="ml-3" htmlFor="invitacion">
+                Invitación
+              </label>
             </div>
-            <div>
+            <div className="outline outline-1 rounded-lg outline-gray-400 m-2 p-2">
               <input
                 type="radio"
                 name="mensaje"
@@ -172,10 +200,13 @@ function App() {
                 value="recordatorio"
                 checked={mensaje === "recordatorio"}
                 onChange={handleRadioChange}
+                className="w-6 h-6"
               />
-              <label htmlFor="recordatorio">Recordatorio de proceso</label>
+              <label className="ml-3" htmlFor="recordatorio">
+                Recordatorio de proceso
+              </label>
             </div>
-            <div>
+            <div className="outline outline-1 rounded-lg outline-gray-400 m-2 p-2">
               <input
                 type="radio"
                 name="mensaje"
@@ -183,100 +214,167 @@ function App() {
                 value="personalizado"
                 checked={mensaje === "personalizado"}
                 onChange={handleRadioChange}
+                className="w-6 h-6"
               />
-              <label htmlFor="personalizado">Personalizado</label>
+              <label className="ml-3" htmlFor="personalizado">
+                Personalizado
+              </label>
             </div>
-            <button type="button" onClick={handleNextForm}>
-              Siguiente
-            </button>
+            <div className="flex justify-end">
+              <button
+                className="bg-blue-400 rounded-lg text-white p-3 hover:bg-blue-500"
+                type="button"
+                onClick={handleNextForm}
+              >
+                Siguiente
+              </button>
+            </div>
           </form>
         </div>
       )}
 
       {showNextForm && (
-        <div>
-          <h2>Selección de Canales</h2>
+        <div className="bg-white inline-block m-5 leading-7 p-5 rounded-lg">
+          <h2 className="text-4xl text-gray-950">Selección de Canales</h2>
           <form>
-            <div>
+            <div className="outline outline-1 rounded-lg outline-gray-400 m-2 p-2">
               <input
                 type="checkbox"
                 id="canal1"
                 value="canal1"
                 checked={canalesSeleccionados.includes("canal1")}
                 onChange={handleCanalChange}
+                className="w-6 h-6"
               />
-              <label htmlFor="canal1">Correo Electronico</label>
+              <label className="ml-3" htmlFor="canal1">
+                Correo Electrónico
+              </label>
             </div>
-            <div>
+            <div className="outline outline-1 rounded-lg outline-gray-400 m-2 p-2">
               <input
                 type="checkbox"
                 id="canal2"
                 value="canal2"
                 checked={canalesSeleccionados.includes("canal2")}
                 onChange={handleCanalChange}
+                className="w-6 h-6"
               />
-              <label htmlFor="canal2">Mensaje de texto</label>
+              <label className="ml-3" htmlFor="canal2">
+                Mensaje de texto
+              </label>
             </div>
-            <div>
+            <div className="outline outline-1 rounded-lg outline-gray-400 m-2 p-2">
               <input
                 type="checkbox"
                 id="canal3"
                 value="canal3"
                 checked={canalesSeleccionados.includes("canal3")}
                 onChange={handleCanalChange}
+                className="w-6 h-6"
               />
-              <label htmlFor="canal3">Whatsapp</label>
+              <label className="ml-3" htmlFor="canal3">
+                WhatsApp
+              </label>
             </div>
-
-            <button type="button" onClick={handlePrevCanalForm}>
-              Atras
-            </button>
-            <button type="button" onClick={handleNextCanalForm}>
-              Siguiente
-            </button>
+            <div className="flex justify-end">
+              <button
+                className="bg-blue-400 rounded-lg text-white p-3 hover:bg-blue-500"
+                type="button"
+                onClick={() => {
+                  if (canalesSeleccionados.length > 0) {
+                    setCurrentCanalFormIndex(0);
+                  } else {
+                    alert("Debes seleccionar al menos un canal.");
+                  }
+                }}
+              >
+                Siguiente
+              </button>
+            </div>
           </form>
         </div>
       )}
 
-      {canalesSeleccionados.length > 0 && currentCanalFormIndex === 0 && canalesSeleccionados.includes("canal1") && (
-        <div>
-          <h3>Formulario para Correo Electrónico</h3>
-          <form>
-            <label>Asunto:</label>
-            <input type="text" value={formMessages["canal1"]?.asunto || ""} readOnly />
-            <br />
-            <label>Mensaje:</label>
-            <textarea value={formMessages["canal1"]?.mensaje || ""} readOnly></textarea>
-            <button type="submit">Enviar</button>
-          </form>
-        </div>
-      )}
+      {canalesSeleccionados.length > 0 &&
+        currentCanalFormIndex < canalesSeleccionados.length &&
+        canalesSeleccionados.includes(canalesSeleccionados[currentCanalFormIndex]) && (
+          <div className="bg-white inline-block m-5 leading-7 p-5 rounded-lg">
+            {canalesSeleccionados[currentCanalFormIndex] === "canal1" && (
+              <>
+                <h3 className="text-4xl text-gray-950">Formulario para Correo Electrónico</h3>
+                <form>
+                  <label>Asunto:</label>
+                  <input
+                    className="w-full h-20 outline outline-1 rounded-lg outline-gray-400"
+                    placeholder="Escribe..."
+                    type="text"
+                    value={formMessages["canal1"]?.asunto || ""}
+                    readOnly
+                  />
+                  <label>Mensaje:</label>
+                  <textarea
+                    className="w-full h-20 outline outline-1 rounded-lg outline-gray-400"
+                    placeholder="Escribe..."
+                    value={formMessages["canal1"]?.mensaje || ""}
+                    readOnly
+                  ></textarea>
+                </form>
+              </>
+            )}
 
-      {canalesSeleccionados.length > 0 && currentCanalFormIndex === 1 && canalesSeleccionados.includes("canal2") && (
-        <div>
-          <h3>Formulario para Mensaje de Texto</h3>
-          <form>
-            <label>Mensaje:</label>
-            <input type="text" value={formMessages["canal2"]?.mensaje || ""} readOnly />
-            <button type="submit">Enviar</button>
-          </form>
-        </div>
-      )}
+            {canalesSeleccionados[currentCanalFormIndex] === "canal2" && (
+              <>
+                <h3 className="text-4xl text-gray-950">Formulario para Mensaje de Texto</h3>
+                <form>
+                  <label>Mensaje:</label>
+                  <input
+                    className="w-full h-20 outline outline-1 rounded-lg outline-gray-400"
+                    type="text"
+                    value={formMessages["canal2"]?.mensaje || ""}
+                    readOnly
+                  />
+                </form>
+              </>
+            )}
 
-      {canalesSeleccionados.length > 0 && currentCanalFormIndex === 2 && canalesSeleccionados.includes("canal3") && (
-        <div>
-          <h3>Formulario para WhatsApp</h3>
-          <form>
-            <label>Mensaje:</label>
-            <input type="text" value={formMessages["canal3"]?.mensaje || ""} readOnly />
-            <button type="submit">Enviar</button>
-          </form>
-        </div>
-      )}
+            {canalesSeleccionados[currentCanalFormIndex] === "canal3" && (
+              <>
+                <h3 className="text-4xl text-gray-950">Formulario para WhatsApp</h3>
+                <form>
+                  <label>Mensaje:</label>
+                  <input
+                    className="w-full h-20 outline outline-1 rounded-lg outline-gray-400"
+                    type="text"
+                    value={formMessages["canal3"]?.mensaje || ""}
+                    readOnly
+                  />
+                </form>
+              </>
+            )}
 
-      {currentCanalFormIndex === canalesSeleccionados.length - 1 && (
-        <button onClick={handleFinalSubmit}>Enviar</button>
-      )}
+            <div className="flex justify-between mt-4">
+              <button
+                className="bg-gray-300 p-3 rounded-lg hover:bg-gray-400"
+                onClick={handlePrevCanalForm}
+                disabled={currentCanalFormIndex === 0}
+              >
+                Atrás
+              </button>
+              <button
+                className="bg-blue-400 text-white p-3 rounded-lg hover:bg-blue-500"
+                onClick={
+                  currentCanalFormIndex === canalesSeleccionados.length - 1
+                    ? handleFinalSubmit
+                    : handleNextCanalForm
+                }
+              >
+                {currentCanalFormIndex === canalesSeleccionados.length - 1
+                  ? "Enviar"
+                  : "Siguiente"}
+              </button>
+            </div>
+          </div>
+        )}
     </>
   );
 }
