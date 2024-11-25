@@ -117,34 +117,38 @@ function App() {
 
   const handleFinalSubmit = () => {
     const messages = [];
-    const newFormMessages = {};
   
     selectedIds.forEach((userId) => {
       const user = usuarios.find((usuario) => usuario.id === userId);
   
       canalesSeleccionados.forEach((canal) => {
-        const generatedMessage = generateMessage(canal);
+        const generatedMessage = formMessages[userId]?.[canal] || generateMessage(canal);
+  
         messages.push({
           usuario: user.nombre,
           canal,
           mensaje: generatedMessage,
         });
-  
-        // Guardar mensajes generados por canal
-        if (!newFormMessages[userId]) {
-          newFormMessages[userId] = {};
-        }
-        newFormMessages[userId][canal] = generatedMessage;
       });
     });
   
-    setFinalMessages(messages);
-    setFormMessages(newFormMessages);
-  
-    console.log("Mensajes generados:", JSON.stringify(messages, null, 2));
+    console.log("Mensajes finales enviados:", JSON.stringify(messages, null, 2));
     alert("Mensajes enviados correctamente.");
   };
   
+  const handleInputChange = (userId, canal, field, value) => {
+    setFormMessages((prev) => ({
+      ...prev,
+      [userId]: {
+        ...prev[userId],
+        [canal]: {
+          ...prev[userId]?.[canal],
+          [field]: value,
+        },
+      },
+    }));
+  };
+    
 
   return (
     <>
@@ -295,86 +299,67 @@ function App() {
         </div>
       )}
 
-      {canalesSeleccionados.length > 0 &&
-        currentCanalFormIndex < canalesSeleccionados.length &&
-        canalesSeleccionados.includes(canalesSeleccionados[currentCanalFormIndex]) && (
-          <div className="bg-white inline-block m-5 leading-7 p-5 rounded-lg">
-            {canalesSeleccionados[currentCanalFormIndex] === "canal1" && (
-              <>
-                <h3 className="text-4xl text-gray-950">Formulario para Correo Electrónico</h3>
-                <form>
+{canalesSeleccionados.length > 0 &&
+  currentCanalFormIndex < canalesSeleccionados.length &&
+  canalesSeleccionados.includes(canalesSeleccionados[currentCanalFormIndex]) && (
+    <div className="bg-white inline-block m-5 leading-7 p-5 rounded-lg">
+      {selectedIds.map((userId) => {
+        const user = usuarios.find((usuario) => usuario.id === userId);
+        const canal = canalesSeleccionados[currentCanalFormIndex];
+        const template = formMessages[userId]?.[canal] || generateMessage(canal);
+
+        return (
+          <div key={`${userId}-${canal}`}>
+            <h3 className="text-4xl text-gray-950">
+              Formulario para {canal === "canal1" ? "Correo Electrónico" : canal === "canal2" ? "Mensaje de Texto" : "WhatsApp"} de {user.nombre}
+            </h3>
+            <form>
+              {canal === "canal1" && (
+                <>
                   <label>Asunto:</label>
                   <input
-                    className="w-full h-20 outline outline-1 rounded-lg outline-gray-400"
+                    className="w-full h-10 outline outline-1 rounded-lg outline-gray-400 mb-2 p-2"
                     placeholder="Escribe..."
                     type="text"
-                    value={formMessages["canal1"]?.asunto || ""}
-                    readOnly
+                    value={template.asunto || ""}
+                    onChange={(e) => handleInputChange(userId, canal, "asunto", e.target.value)}
                   />
-                  <label>Mensaje:</label>
-                  <textarea
-                    className="w-full h-20 outline outline-1 rounded-lg outline-gray-400"
-                    placeholder="Escribe..."
-                    value={formMessages["canal1"]?.mensaje || ""}
-                    readOnly
-                  ></textarea>
-                </form>
-              </>
-            )}
-
-            {canalesSeleccionados[currentCanalFormIndex] === "canal2" && (
-              <>
-                <h3 className="text-4xl text-gray-950">Formulario para Mensaje de Texto</h3>
-                <form>
-                  <label>Mensaje:</label>
-                  <input
-                    className="w-full h-20 outline outline-1 rounded-lg outline-gray-400"
-                    type="text"
-                    value={formMessages["canal2"]?.mensaje || ""}
-                    readOnly
-                  />
-                </form>
-              </>
-            )}
-
-            {canalesSeleccionados[currentCanalFormIndex] === "canal3" && (
-              <>
-                <h3 className="text-4xl text-gray-950">Formulario para WhatsApp</h3>
-                <form>
-                  <label>Mensaje:</label>
-                  <input
-                    className="w-full h-20 outline outline-1 rounded-lg outline-gray-400"
-                    type="text"
-                    value={formMessages["canal3"]?.mensaje || ""}
-                    readOnly
-                  />
-                </form>
-              </>
-            )}
-
-            <div className="flex justify-between mt-4">
-              <button
-                className="bg-gray-300 p-3 rounded-lg hover:bg-gray-400"
-                onClick={handlePrevCanalForm}
-                disabled={currentCanalFormIndex === 0}
-              >
-                Atrás
-              </button>
-              <button
-                className="bg-blue-400 text-white p-3 rounded-lg hover:bg-blue-500"
-                onClick={
-                  currentCanalFormIndex === canalesSeleccionados.length - 1
-                    ? handleFinalSubmit
-                    : handleNextCanalForm
-                }
-              >
-                {currentCanalFormIndex === canalesSeleccionados.length - 1
-                  ? "Enviar"
-                  : "Siguiente"}
-              </button>
-            </div>
+                </>
+              )}
+              <label>Mensaje:</label>
+              <textarea
+                className="w-full h-20 outline outline-1 rounded-lg outline-gray-400 p-2"
+                placeholder="Escribe..."
+                value={template.mensaje || ""}
+                onChange={(e) => handleInputChange(userId, canal, "mensaje", e.target.value)}
+              ></textarea>
+            </form>
           </div>
-        )}
+        );
+      })}
+      <div className="flex justify-between mt-4">
+        <button
+          className="bg-gray-300 p-3 rounded-lg hover:bg-gray-400"
+          onClick={handlePrevCanalForm}
+          disabled={currentCanalFormIndex === 0}
+        >
+          Atrás
+        </button>
+        <button
+          className="bg-blue-400 text-white p-3 rounded-lg hover:bg-blue-500"
+          onClick={
+            currentCanalFormIndex === canalesSeleccionados.length - 1
+              ? handleFinalSubmit
+              : handleNextCanalForm
+          }
+        >
+          {currentCanalFormIndex === canalesSeleccionados.length - 1
+            ? "Enviar"
+            : "Siguiente"}
+        </button>
+      </div>
+    </div>
+  )}
     </>
   );
 }
